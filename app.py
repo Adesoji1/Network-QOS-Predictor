@@ -4,6 +4,7 @@ import streamlit as st
 import pickle
 from geopy.geocoders import Nominatim
 from sklearn.preprocessing import LabelEncoder
+from geopy.extra.rate_limiter import RateLimiter
 
 # Load the trained model and label encoder
 model = pickle.load(open('model.pkl', 'rb'))
@@ -37,17 +38,30 @@ def categorize_quality(sinr, rsrq, rsrp):
         return 'Unknown'
 
 # Function to predict SINR, RSRQ, RSRP for a given network operator and location
+# def predict_values(network_operator, location):
+#     geolocator = Nominatim(user_agent="myGeocoder")
+#     #geolocator = Nominatim(user_agent="geoapiExercises")
+#     location_geo = geolocator.geocode(location)
+#     if network_operator not in le_operator.classes_:
+#         network_operator = 'others'
+#     encoded_operator = le_operator.transform([network_operator])
+#     sinr, rsrq, rsrp = model.predict([[encoded_operator[0], location_geo.longitude, location_geo.latitude]])[0]
+#     quality = categorize_quality(sinr, rsrq, rsrp)
+#     return location_geo, sinr, rsrq, rsrp, quality
+
+#     return location_geo, sinr, rsrq, rsrp, quality
+
+
 def predict_values(network_operator, location):
-    geolocator = Nominatim(user_agent="myGeocoder")
-    #geolocator = Nominatim(user_agent="geoapiExercises")
-    location_geo = geolocator.geocode(location)
+    geolocator = Nominatim(user_agent="MobileNetworkQosPredictor_app_myemail@example.com")
+    geocode = RateLimiter(geolocator.geocode, min_delay_seconds=1)
+    location_geo = geocode(location)
+    
     if network_operator not in le_operator.classes_:
         network_operator = 'others'
     encoded_operator = le_operator.transform([network_operator])
     sinr, rsrq, rsrp = model.predict([[encoded_operator[0], location_geo.longitude, location_geo.latitude]])[0]
     quality = categorize_quality(sinr, rsrq, rsrp)
-    return location_geo, sinr, rsrq, rsrp, quality
-
     return location_geo, sinr, rsrq, rsrp, quality
 
 
